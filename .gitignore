@@ -1,0 +1,24 @@
+# Data — never commit raw data
+data/
+
+# Virtual environment
+venv/
+
+# MLflow tracking
+mlruns/
+mlartifacts/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+
+# Model binaries
+*.pkl
+*.joblib
+*.h5
