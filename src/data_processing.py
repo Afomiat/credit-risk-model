@@ -23,7 +23,6 @@ from sklearn.preprocessing import (
     StandardScaler,
     MinMaxScaler,
     OneHotEncoder,
-    LabelEncoder
 )
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
@@ -395,4 +394,4 @@ if __name__ == "__main__":
     process_raw_data(
         input_path='data/raw/data.csv',
         output_path='data/processed/processed_data.csv'
-    )
+    )
