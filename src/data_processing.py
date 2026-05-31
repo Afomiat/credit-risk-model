@@ -89,38 +89,38 @@ class AggregateFeatures(BaseEstimator, TransformerMixin):
         agg = df.groupby('CustomerId').agg(
 
             # Transaction volume features
-            TotalTransactions = ('TransactionId', 'count'),
-            UniqueBatches     = ('BatchId', 'nunique'),
+            TotalTransactions=('TransactionId', 'count'),
+            UniqueBatches=('BatchId', 'nunique'),
 
             # Amount features — core financial behavior
-            TotalAmount    = ('Amount', 'sum'),
-            AvgAmount      = ('Amount', 'mean'),
-            StdAmount      = ('Amount', 'std'),
-            MaxAmount      = ('Amount', 'max'),
-            MinAmount      = ('Amount', 'min'),
-            MedianAmount   = ('Amount', 'median'),
+            TotalAmount=('Amount', 'sum'),
+            AvgAmount=('Amount', 'mean'),
+            StdAmount=('Amount', 'std'),
+            MaxAmount=('Amount', 'max'),
+            MinAmount=('Amount', 'min'),
+            MedianAmount=('Amount', 'median'),
 
             # Value features
-            TotalValue     = ('Value', 'sum'),
-            AvgValue       = ('Value', 'mean'),
-            MaxValue       = ('Value', 'max'),
+            TotalValue=('Value', 'sum'),
+            AvgValue=('Value', 'mean'),
+            MaxValue=('Value', 'max'),
 
             # Product diversity
-            UniqueProducts  = ('ProductId', 'nunique'),
-            UniqueCategories= ('ProductCategory', 'nunique'),
-            UniqueProviders = ('ProviderId', 'nunique'),
-            UniqueChannels  = ('ChannelId', 'nunique'),
+            UniqueProducts=('ProductId', 'nunique'),
+            UniqueCategories=('ProductCategory', 'nunique'),
+            UniqueProviders=('ProviderId', 'nunique'),
+            UniqueChannels=('ChannelId', 'nunique'),
 
             # Fraud behavior
-            FraudCount     = ('FraudResult', 'sum'),
+            FraudCount=('FraudResult', 'sum'),
 
             # Time features
-            FirstTransaction = ('TransactionStartTime', 'min'),
-            LastTransaction  = ('TransactionStartTime', 'max'),
+            FirstTransaction=('TransactionStartTime', 'min'),
+            LastTransaction=('TransactionStartTime', 'max'),
 
             # Positive vs negative amount counts
-            PositiveCount  = ('Amount', lambda x: (x > 0).sum()),
-            NegativeCount  = ('Amount', lambda x: (x < 0).sum()),
+            PositiveCount=('Amount', lambda x: (x > 0).sum()),
+            NegativeCount=('Amount', lambda x: (x < 0).sum()),
 
         ).reset_index()
 
@@ -192,12 +192,12 @@ class TimeFeatureExtractor(BaseEstimator, TransformerMixin):
                 errors='coerce'
             )
 
-        df['TransactionHour']      = df['TransactionStartTime'].dt.hour
-        df['TransactionDay']       = df['TransactionStartTime'].dt.day
-        df['TransactionMonth']     = df['TransactionStartTime'].dt.month
-        df['TransactionYear']      = df['TransactionStartTime'].dt.year
+        df['TransactionHour'] = df['TransactionStartTime'].dt.hour
+        df['TransactionDay'] = df['TransactionStartTime'].dt.day
+        df['TransactionMonth'] = df['TransactionStartTime'].dt.month
+        df['TransactionYear'] = df['TransactionStartTime'].dt.year
         df['TransactionDayOfWeek'] = df['TransactionStartTime'].dt.dayofweek
-        df['IsWeekend']            = (
+        df['IsWeekend'] = (
             df['TransactionDayOfWeek'] >= 5
         ).astype(int)
 
@@ -285,7 +285,7 @@ def build_feature_pipeline():
     pipeline = Pipeline([
         ('time_features', TimeFeatureExtractor()),
         ('drop_constants', DropConstantColumns()),
-        ('aggregate',     AggregateFeatures()),
+        ('aggregate', AggregateFeatures()),
     ])
 
     return pipeline
@@ -323,7 +323,7 @@ def build_preprocessing_pipeline(
     # Impute missing → scale
     numerical_pipeline = Pipeline([
         ('imputer', SimpleImputer(strategy='median')),
-        ('scaler',  scaler),
+        ('scaler', scaler),
     ])
 
     # Categorical pipeline
@@ -339,7 +339,7 @@ def build_preprocessing_pipeline(
     # Combine both pipelines
     preprocessor = ColumnTransformer(
         transformers=[
-            ('num', numerical_pipeline,  numerical_cols),
+            ('num', numerical_pipeline, numerical_cols),
             ('cat', categorical_pipeline, categorical_cols),
         ],
         remainder='drop'  # drop columns not specified
@@ -395,4 +395,4 @@ if __name__ == "__main__":
     process_raw_data(
         input_path='data/raw/data.csv',
         output_path='data/processed/processed_data.csv'
-    )
+    )
