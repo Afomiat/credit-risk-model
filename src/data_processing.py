@@ -390,8 +390,224 @@ def process_raw_data(input_path: str,
     return df_processed
 
 
+# ─── RFM & Target Variable ───────────────────────────────────
+
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import RobustScaler
+
+
+def calculate_rfm(df_raw: pd.DataFrame,
+                  snapshot_date: str = None) -> pd.DataFrame:
+    """
+    Calculate RFM metrics for each customer.
+
+    Recency   = days since last transaction
+    Frequency = total number of transactions
+    Monetary  = total positive amount spent
+    """
+    logger.info("Calculating RFM metrics...")
+
+    df = df_raw.copy()
+
+    df['TransactionStartTime'] = pd.to_datetime(
+        df['TransactionStartTime'], utc=True, errors='coerce'
+    )
+
+    if snapshot_date is None:
+        snapshot = (
+            df['TransactionStartTime'].max()
+            + pd.Timedelta(days=1)
+        )
+    else:
+        snapshot = pd.Timestamp(snapshot_date, tz='UTC')
+
+    logger.info(f"Snapshot date: {snapshot.date()}")
+
+    last_txn = df.groupby('CustomerId')[
+        'TransactionStartTime'
+    ].max().reset_index()
+    last_txn.columns = ['CustomerId', 'LastTransaction']
+    last_txn['Recency'] = (
+        snapshot - last_txn['LastTransaction']
+    ).dt.days
+
+    frequency = df.groupby('CustomerId').size().reset_index()
+    frequency.columns = ['CustomerId', 'Frequency']
+
+    monetary = df[df['Amount'] > 0].groupby(
+        'CustomerId'
+    )['Amount'].sum().reset_index()
+    monetary.columns = ['CustomerId', 'Monetary']
+
+    rfm = last_txn[['CustomerId', 'Recency']].merge(
+        frequency, on='CustomerId'
+    ).merge(
+        monetary, on='CustomerId', how='left'
+    )
+
+    rfm['Monetary'] = rfm['Monetary'].fillna(0)
+
+    logger.info(f"RFM calculated for {len(rfm):,} customers")
+    logger.info(
+        f"\nRFM Summary:\n"
+        f"{rfm[['Recency','Frequency','Monetary']].describe().round(2)}"
+    )
+
+    return rfm
+
+
+def assign_risk_labels(
+    rfm: pd.DataFrame,
+    n_clusters: int = 3,
+    random_state: int = 42
+) -> pd.DataFrame:
+    """
+    Cluster customers by RFM and assign is_high_risk label.
+
+    Uses log-transformed Frequency and Monetary before
+    scaling to handle extreme outliers (max 4,091
+    transactions, max 83M UGX monetary value).
+
+    High-risk = highest recency + lowest frequency
+              + lowest monetary.
+    """
+    logger.info("Clustering customers by RFM profile...")
+
+    rfm = rfm.copy()
+
+    # Log-transform skewed dimensions before clustering
+    # This prevents extreme outliers from dominating
+    # the distance calculations in K-Means
+    rfm['LogFrequency'] = np.log1p(rfm['Frequency'])
+    rfm['LogMonetary']  = np.log1p(rfm['Monetary'])
+
+    # Scale using RobustScaler on log-transformed values
+    scaler = RobustScaler()
+    rfm_scaled = scaler.fit_transform(
+        rfm[['Recency', 'LogFrequency', 'LogMonetary']]
+    )
+
+    # K-Means with fixed random_state for reproducibility
+    kmeans = KMeans(
+        n_clusters=n_clusters,
+        random_state=random_state,
+        n_init=10
+    )
+    rfm['Cluster'] = kmeans.fit_predict(rfm_scaled)
+
+    # Analyze clusters on ORIGINAL (non-log) values
+    # so the business interpretation is readable
+    cluster_summary = rfm.groupby('Cluster').agg(
+        AvgRecency    = ('Recency',    'mean'),
+        AvgFrequency  = ('Frequency',  'mean'),
+        AvgMonetary   = ('Monetary',   'mean'),
+        CustomerCount = ('CustomerId', 'count')
+    ).round(2)
+
+    logger.info(f"\nCluster Profiles:\n{cluster_summary}")
+
+    # Risk score:
+    # Higher recency = worse (more days since last txn)
+    # Lower frequency = worse
+    # Lower monetary = worse
+    # Use log values for scoring too — more balanced
+    cluster_summary['AvgLogFreq'] = rfm.groupby(
+        'Cluster'
+    )['LogFrequency'].mean()
+    cluster_summary['AvgLogMon'] = rfm.groupby(
+        'Cluster'
+    )['LogMonetary'].mean()
+
+    cluster_summary['RiskScore'] = (
+        cluster_summary['AvgRecency']
+        - cluster_summary['AvgLogFreq'] * 10
+        - cluster_summary['AvgLogMon']  * 5
+    )
+
+    high_risk_cluster = cluster_summary['RiskScore'].idxmax()
+    logger.info(
+        f"High-risk cluster identified: "
+        f"Cluster {high_risk_cluster}"
+    )
+    logger.info(
+        f"High-risk profile: "
+        f"Avg Recency={cluster_summary.loc[high_risk_cluster,'AvgRecency']:.1f} days, "
+        f"Avg Frequency={cluster_summary.loc[high_risk_cluster,'AvgFrequency']:.1f} txns, "
+        f"Avg Monetary=UGX {cluster_summary.loc[high_risk_cluster,'AvgMonetary']:,.0f}"
+    )
+
+    rfm['is_high_risk'] = (
+        rfm['Cluster'] == high_risk_cluster
+    ).astype(int)
+
+    risk_counts = rfm['is_high_risk'].value_counts()
+    logger.info(
+        f"\nRisk Label Distribution:\n"
+        f"  Low risk  (0): {risk_counts.get(0, 0):,} "
+        f"({risk_counts.get(0, 0)/len(rfm):.1%})\n"
+        f"  High risk (1): {risk_counts.get(1, 0):,} "
+        f"({risk_counts.get(1, 0)/len(rfm):.1%})"
+    )
+
+    return rfm
+
+def build_final_dataset(
+    input_path: str,
+    output_path: str
+) -> pd.DataFrame:
+    """
+    Master function for Task 4:
+    Runs feature engineering + RFM + clustering
+    and saves the final labeled dataset.
+    """
+    logger.info("=" * 55)
+    logger.info("BUILDING FINAL DATASET WITH TARGET VARIABLE")
+    logger.info("=" * 55)
+
+    df_raw = pd.read_csv(input_path)
+
+    # Feature engineering
+    pipeline = build_feature_pipeline()
+    df_features = pipeline.fit_transform(df_raw)
+
+    # RFM calculation
+    rfm = calculate_rfm(df_raw)
+
+    # Risk label assignment
+    rfm_labeled = assign_risk_labels(rfm)
+
+    # Merge features + labels
+    df_final = df_features.merge(
+        rfm_labeled[[
+            'CustomerId', 'Recency',
+            'Frequency', 'Monetary',
+            'Cluster', 'is_high_risk'
+        ]],
+        on='CustomerId',
+        how='left'
+    )
+
+    logger.info(
+        f"\nFinal dataset: "
+        f"{df_final.shape[0]:,} customers × "
+        f"{df_final.shape[1]} features"
+    )
+    logger.info(
+        f"High-risk customers: "
+        f"{df_final['is_high_risk'].sum():,} "
+        f"({df_final['is_high_risk'].mean():.1%})"
+    )
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    df_final.to_csv(output_path, index=False)
+    logger.info(f"Saved to: {output_path}")
+    logger.info("=" * 55)
+
+    return df_final
+
+
 if __name__ == "__main__":
-    process_raw_data(
+    build_final_dataset(
         input_path='data/raw/data.csv',
-        output_path='data/processed/processed_data.csv'
+        output_path='data/processed/final_dataset.csv'
     )
