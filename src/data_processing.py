@@ -498,10 +498,10 @@ def assign_risk_labels(
     # Analyze clusters on ORIGINAL (non-log) values
     # so the business interpretation is readable
     cluster_summary = rfm.groupby('Cluster').agg(
-        AvgRecency    = ('Recency',    'mean'),
-        AvgFrequency  = ('Frequency',  'mean'),
-        AvgMonetary   = ('Monetary',   'mean'),
-        CustomerCount = ('CustomerId', 'count')
+        AvgRecency=('Recency', 'mean'),
+        AvgFrequency=('Frequency', 'mean'),
+        AvgMonetary=('Monetary', 'mean'),
+        CustomerCount=('CustomerId', 'count')
     ).round(2)
 
     logger.info(f"\nCluster Profiles:\n{cluster_summary}")
@@ -521,7 +521,7 @@ def assign_risk_labels(
     cluster_summary['RiskScore'] = (
         cluster_summary['AvgRecency']
         - cluster_summary['AvgLogFreq'] * 10
-        - cluster_summary['AvgLogMon']  * 5
+        - cluster_summary['AvgLogMon'] * 5
     )
 
     high_risk_cluster = cluster_summary['RiskScore'].idxmax()
@@ -550,6 +550,7 @@ def assign_risk_labels(
     )
 
     return rfm
+
 
 def build_final_dataset(
     input_path: str,
