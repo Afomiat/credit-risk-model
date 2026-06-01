@@ -2,9 +2,11 @@ name: CI Pipeline
 
 on:
   push:
-    branches: ["**"]
+    branches:
+      - "**"
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   lint-and-test:
@@ -27,3 +29,8 @@ jobs:
 
       - name: Run tests
         run: pytest tests/ -v
+
+      - name: Verify Docker files exist
+        run: |
+          test -f Dockerfile && echo "✅ Dockerfile found"
+          test -f docker-compose.yml && echo "✅ docker-compose.yml found"

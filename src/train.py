@@ -21,6 +21,7 @@ import mlflow.sklearn
 import mlflow.xgboost
 import logging
 import os
+import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -435,6 +436,12 @@ def main():
         "\nModel comparison saved to: "
         "reports/model_comparison.csv"
     )
+
+    # Save best model to disk for API serving
+    os.makedirs('models', exist_ok=True)
+    best_model_obj = best['model']
+    joblib.dump(best_model_obj, 'models/best_model.pkl')
+    logger.info("Best model saved to: models/best_model.pkl")
 
     logger.info("=" * 55)
     logger.info("TRAINING COMPLETE — check MLflow UI:")
