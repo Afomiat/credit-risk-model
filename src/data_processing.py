@@ -23,10 +23,12 @@ from sklearn.preprocessing import (
     StandardScaler,
     MinMaxScaler,
     OneHotEncoder,
+    RobustScaler,
 )
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.cluster import KMeans
 import logging
 import os
 
@@ -392,9 +394,6 @@ def process_raw_data(input_path: str,
 
 # ─── RFM & Target Variable ───────────────────────────────────
 
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import RobustScaler
-
 
 def calculate_rfm(df_raw: pd.DataFrame,
                   snapshot_date: str = None) -> pd.DataFrame:
@@ -479,7 +478,7 @@ def assign_risk_labels(
     # This prevents extreme outliers from dominating
     # the distance calculations in K-Means
     rfm['LogFrequency'] = np.log1p(rfm['Frequency'])
-    rfm['LogMonetary']  = np.log1p(rfm['Monetary'])
+    rfm['LogMonetary'] = np.log1p(rfm['Monetary'])
 
     # Scale using RobustScaler on log-transformed values
     scaler = RobustScaler()
