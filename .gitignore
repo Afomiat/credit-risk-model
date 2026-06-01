@@ -7,18 +7,13 @@ venv/
 # MLflow tracking
 mlruns/
 mlartifacts/
-
-# Jupyter checkpoints
-.ipynb_checkpoints/
-
-# Python cache
-__pycache__/
-*.pyc
-
+mlflow.db
+reports/model_comparison.csv
 # Environment files
 .env
 
-# Model binaries
+# Model binaries — never commit trained models
+models/
 *.pkl
 *.joblib
 *.h5

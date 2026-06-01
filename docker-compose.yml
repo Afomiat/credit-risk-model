@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  credit-risk-api:
+    build: .
+    container_name: bati-bank-credit-risk-api
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_PATH=models/best_model.pkl
+    volumes:
+      - ./models:/app/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
