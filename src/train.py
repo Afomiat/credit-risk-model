@@ -16,20 +16,21 @@ Date: May 2026
 """
 
 import pandas as pd
-import numpy as np
 import mlflow
 import mlflow.sklearn
 import mlflow.xgboost
 import logging
 import os
-import json
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
-    accuracy_score, precision_score,
-    recall_score, f1_score, roc_auc_score,
-    classification_report, confusion_matrix
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    classification_report,
 )
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
@@ -125,14 +126,14 @@ def evaluate_model(
     y_prob = model.predict_proba(X_test)[:, 1]
 
     metrics = {
-        'accuracy':  round(accuracy_score(y_test, y_pred), 4),
+        'accuracy': round(accuracy_score(y_test, y_pred), 4),
         'precision': round(precision_score(
             y_test, y_pred, zero_division=0), 4),
-        'recall':    round(recall_score(
+        'recall': round(recall_score(
             y_test, y_pred, zero_division=0), 4),
-        'f1':        round(f1_score(
+        'f1': round(f1_score(
             y_test, y_pred, zero_division=0), 4),
-        'roc_auc':   round(roc_auc_score(y_test, y_prob), 4),
+        'roc_auc': round(roc_auc_score(y_test, y_prob), 4),
     }
 
     logger.info(f"\n{model_name} Results:")
@@ -171,8 +172,8 @@ def train_logistic_regression(
         # Pipeline: impute missing → scale → classify
         pipeline = Pipeline([
             ('imputer', SimpleImputer(strategy='median')),
-            ('scaler',  StandardScaler()),
-            ('model',   LogisticRegression(
+            ('scaler', StandardScaler()),
+            ('model', LogisticRegression(
                 class_weight='balanced',
                 # balanced adjusts for 97/3 imbalance
                 max_iter=1000,
@@ -237,7 +238,7 @@ def train_random_forest(
 
         pipeline = Pipeline([
             ('imputer', SimpleImputer(strategy='median')),
-            ('model',   RandomForestClassifier(
+            ('model', RandomForestClassifier(
                 n_estimators=100,
                 max_depth=10,
                 class_weight='balanced',
@@ -304,7 +305,7 @@ def train_xgboost(
 
         pipeline = Pipeline([
             ('imputer', SimpleImputer(strategy='median')),
-            ('model',   xgb.XGBClassifier(
+            ('model', xgb.XGBClassifier(
                 n_estimators=200,
                 max_depth=6,
                 learning_rate=0.1,
@@ -445,4 +446,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()
