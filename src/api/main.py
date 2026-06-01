@@ -140,9 +140,9 @@ def predict(
 def root():
     """Root endpoint — API info."""
     return {
-        "name":    "Bati Bank Credit Risk API",
+        "name": "Bati Bank Credit Risk API",
         "version": "1.0.0",
-        "docs":    "/docs",
-        "health":  "/health",
+        "docs": "/docs",
+        "health": "/health",
         "predict": "/predict"
     }

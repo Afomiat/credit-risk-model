@@ -17,68 +17,93 @@ class CustomerFeatures(BaseModel):
     Matches the features produced by the pipeline.
     """
     # Transaction volume
-    TotalTransactions:  float = Field(..., ge=0,
-        description="Total number of transactions")
-    TotalAmount:        float = Field(...,
-        description="Sum of all transaction amounts (UGX)")
-    AvgAmount:          float = Field(...,
-        description="Average transaction amount (UGX)")
-    StdAmount:          float = Field(0.0, ge=0,
-        description="Std deviation of transaction amounts")
-    MaxAmount:          float = Field(...,
-        description="Largest single transaction (UGX)")
-    MinAmount:          float = Field(...,
-        description="Smallest single transaction (UGX)")
-    MedianAmount:       float = Field(...,
-        description="Median transaction amount (UGX)")
+    TotalTransactions: float = Field(
+        ..., ge=0, description="Total number of transactions"
+    )
+    TotalAmount: float = Field(
+        ..., description="Sum of all transaction amounts (UGX)"
+    )
+    AvgAmount: float = Field(
+        ..., description="Average transaction amount (UGX)"
+    )
+    StdAmount: float = Field(
+        0.0, ge=0, description="Std deviation of transaction amounts"
+    )
+    MaxAmount: float = Field(
+        ..., description="Largest single transaction (UGX)"
+    )
+    MinAmount: float = Field(
+        ..., description="Smallest single transaction (UGX)"
+    )
+    MedianAmount: float = Field(
+        ..., description="Median transaction amount (UGX)"
+    )
 
     # Value metrics
-    TotalValue:         float = Field(..., ge=0,
-        description="Sum of absolute transaction values")
-    AvgValue:           float = Field(..., ge=0,
-        description="Average absolute transaction value")
-    MaxValue:           float = Field(..., ge=0,
-        description="Maximum absolute transaction value")
+    TotalValue: float = Field(
+        ..., ge=0, description="Sum of absolute transaction values"
+    )
+    AvgValue: float = Field(
+        ..., ge=0, description="Average absolute transaction value"
+    )
+    MaxValue: float = Field(
+        ..., ge=0, description="Maximum absolute transaction value"
+    )
 
     # Diversity
-    UniqueProducts:     int   = Field(..., ge=1,
-        description="Number of unique products purchased")
-    UniqueCategories:   int   = Field(..., ge=1,
-        description="Number of unique product categories")
-    UniqueProviders:    int   = Field(..., ge=1,
-        description="Number of unique providers used")
-    UniqueChannels:     int   = Field(..., ge=1,
-        description="Number of unique channels used")
-    UniqueBatches:      int   = Field(..., ge=1,
-        description="Number of unique batch IDs")
+    UniqueProducts: int = Field(
+        ..., ge=1, description="Number of unique products purchased"
+    )
+    UniqueCategories: int = Field(
+        ..., ge=1, description="Number of unique product categories"
+    )
+    UniqueProviders: int = Field(
+        ..., ge=1, description="Number of unique providers used"
+    )
+    UniqueChannels: int = Field(
+        ..., ge=1, description="Number of unique channels used"
+    )
+    UniqueBatches: int = Field(
+        ..., ge=1, description="Number of unique batch IDs"
+    )
 
     # Fraud signals
-    FraudCount:         int   = Field(0, ge=0,
-        description="Number of fraudulent transactions")
-    FraudRate:          float = Field(0.0, ge=0, le=1,
-        description="Proportion of fraudulent transactions")
+    FraudCount: int = Field(
+        0, ge=0, description="Number of fraudulent transactions"
+    )
+    FraudRate: float = Field(
+        0.0, ge=0, le=1, description="Proportion of fraudulent transactions"
+    )
 
     # Temporal
-    TenureDays:         int   = Field(..., ge=0,
-        description="Days between first and last transaction")
-    TransactionVelocity: float = Field(..., ge=0,
-        description="Transactions per day")
+    TenureDays: int = Field(
+        ..., ge=0, description="Days between first and last transaction"
+    )
+    TransactionVelocity: float = Field(
+        ..., ge=0, description="Transactions per day"
+    )
 
     # Debit/credit split
-    PositiveCount:      int   = Field(..., ge=0,
-        description="Number of debit transactions")
-    NegativeCount:      int   = Field(..., ge=0,
-        description="Number of credit transactions")
-    PositiveAmountRatio: float = Field(..., ge=0, le=1,
-        description="Proportion of debit transactions")
+    PositiveCount: int = Field(
+        ..., ge=0, description="Number of debit transactions"
+    )
+    NegativeCount: int = Field(
+        ..., ge=0, description="Number of credit transactions"
+    )
+    PositiveAmountRatio: float = Field(
+        ..., ge=0, le=1, description="Proportion of debit transactions"
+    )
 
     # RFM features
-    Recency:            int   = Field(..., ge=0,
-        description="Days since last transaction")
-    Frequency:          int   = Field(..., ge=1,
-        description="Total transaction count")
-    Monetary:           float = Field(..., ge=0,
-        description="Total positive spend (UGX)")
+    Recency: int = Field(
+        ..., ge=0, description="Days since last transaction"
+    )
+    Frequency: int = Field(
+        ..., ge=1, description="Total transaction count"
+    )
+    Monetary: float = Field(
+        ..., ge=0, description="Total positive spend (UGX)"
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -117,16 +142,21 @@ class PredictionResponse(BaseModel):
     """
     Output schema for credit risk prediction.
     """
-    customer_id:        Optional[str] = Field(
-        None, description="Customer ID if provided")
-    risk_probability:   float = Field(...,
-        description="Probability of being high-risk (0-1)")
-    is_high_risk:       bool  = Field(...,
-        description="Binary risk classification")
-    risk_label:         str   = Field(...,
-        description="Human-readable risk label")
-    model_version:      str   = Field(...,
-        description="Model version used for prediction")
+    customer_id: Optional[str] = Field(
+        None, description="Customer ID if provided"
+    )
+    risk_probability: float = Field(
+        ..., description="Probability of being high-risk (0-1)"
+    )
+    is_high_risk: bool = Field(
+        ..., description="Binary risk classification"
+    )
+    risk_label: str = Field(
+        ..., description="Human-readable risk label"
+    )
+    model_version: str = Field(
+        ..., description="Model version used for prediction"
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -143,6 +173,6 @@ class PredictionResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response schema."""
-    status:        str
-    model_loaded:  bool
+    status: str
+    model_loaded: bool
     model_version: str
